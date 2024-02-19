@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  </head>
+
+  <body class="bg-gray-100">
+    <div class="relative">
+      <div class="relative bg-opacity-75 bg-deep-purple-accent-700">
+        <div
+          class="relative px-4 py-16 mx-auto overflow-hidden sm:max-w-xl md:max-w-full lg:max-w-screen-xl md:px-24 lg:px-8 lg:py-20"
+        >
+          <div class="flex flex-col items-center justify-between xl:flex-row">
+            <div class="w-full max-w-xl mb-12 xl:mb-0 xl:pr-16 xl:w-7/12">
+              <div class="mb-12 flex justify-center" id="stampContainer">
+                <!-- SVGs will be loaded here -->
+              </div>
+              <div class="mx-auto">
+                <div
+                  class="p-4 bg-white shadow-md rounded border border-gray-500"
+                >
+                  <form class="w-full max-w-xl mx-auto">
+                    <div class="mb-4">
+                      <label for="nameInput" class="block text-gray-700"
+                        >Enter your name:</label
+                      >
+                      <div class="flex items-center">
+                        <input
+                          type="text"
+                          id="nameInput"
+                          class="w-full px-3 py-2 border border-gray-300 rounded"
+                        />
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="loadingOverlay">
+      <div class="loader"></div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        loadSVGs(["img/curved_stamp.svg", "img/block_stamp.svg"]);
+      });
+
+      function loadSVGs(svgPaths) {
+        svgPaths.forEach((svgPath) => {
+          fetch(svgPath)
+            .then((response) => response.text())
+            .then((svgData) => {
+              const stampContainer = document.getElementById("stampContainer");
+              const div = document.createElement("div");
+              div.innerHTML = svgData;
+              div.classList.add("inline-block");
+              stampContainer.appendChild(div);
+              return stampContainer;
+            })
+            .then((stampContainer) => {
+              // ======= fontsize regulation variables
+              //  variables for both functions
+              const spacedTexts =
+                stampContainer.querySelectorAll(".spaced-text");
+
+              const originalFontSize = parseFloat(
+                window
+                  .getComputedStyle(spacedTexts[0])
+                  .getPropertyValue("font-size")
+              );
+
+              // variables for the left stamp function
+              const curvedTextContiner = stampContainer.querySelector(
+                ".curved-text-container"
+              );
+
+              let i = 0;
+
+              const curvedSvgBottom = document
+                .querySelector(".curved-svg")
+                .getBoundingClientRect().bottom;
+
+              const curvedText = stampContainer.querySelector(".curved-text");
+
+              //   variables for the right stamp function
+              const blockStampText =
+                stampContainer.querySelector(".block-stamp-text");
+
+              const blockTextContainer =
+                stampContainer.querySelector("#textContainer");
+              return {
+                spacedTexts,
+                originalFontSize,
+                curvedTextContiner,
+                curvedSvgBottom,
+                curvedText,
+                i,
+                blockStampText,
+                blockTextContainer,
+              };
+            })
+            .then(
+              ({
+                spacedTexts,
+                originalFontSize,
+                curvedTextContiner,
+                curvedSvgBottom,
+                curvedText,
+                i,
+                blockStampText,
+                blockTextContainer,
+              }) => {
+                const curvedTextScale = 0.04;
+                const blockTextScale = 0.1;
+                // ====== left function
+                function regulateFontSizeLeft() {
+                  const spacedTextFontSize = parseFloat(
+                    window
+                      .getComputedStyle(spacedTexts[0])
+                      .getPropertyValue("font-size")
+                  );
+
+                  const curvedTextBottom =
+                    curvedText.getBoundingClientRect().bottom;
+
+                  if (curvedTextBottom > curvedSvgBottom * 0.6) {
+                    spacedTexts[0].style.fontSize = `${(
+                      spacedTextFontSize *
+                      (1 - curvedTextScale)
+                    ).toFixed(1)}px`;
+                    curvedTextContiner.style.transform = `translateY(${i}px)`;
+                    i -= 0.04;
+                    regulateFontSizeLeft();
+                  } else if (spacedTextFontSize < originalFontSize) {
+                    spacedTexts[0].style.fontSize = `${(
+                      spacedTextFontSize *
+                      (1 + curvedTextScale)
+                    ).toFixed(1)}px`;
+                    if (curvedTextBottom > curvedSvgBottom * 0.6) {
+                      spacedTexts[0].style.fontSize = `${(
+                        spacedTextFontSize *
+                        (1 - curvedTextScale)
+                      ).toFixed(1)}px`;
+                      i += 0.02;
+                      curvedTextContiner.style.transform = `translateY(${
+                        i > 0 ? i : 0
+                      }px)`;
+                    }
+                  }
+                }
+
+                // ===== right function
+                function regulateFontSizeRight() {
+                  if (blockStampText) {
+                    const spacedTextFontSize = parseFloat(
+                      window
+                        .getComputedStyle(blockStampText)
+                        .getPropertyValue("font-size")
+                    );
+
+                    const textContainerHeight =
+                      blockTextContainer.getBoundingClientRect().height;
+                    if (
+                      blockStampText.getBoundingClientRect().height >
+                      textContainerHeight + 2
+                    ) {
+                      spacedTexts[1].style.fontSize = `${(
+                        spacedTextFontSize *
+                        (1 - blockTextScale)
+                      ).toFixed(1)}px`;
+                      regulateFontSizeRight();
+                    } else if (spacedTextFontSize < originalFontSize) {
+                      spacedTexts[1].style.fontSize = `${(
+                        spacedTextFontSize *
+                        (1 + blockTextScale / 2)
+                      ).toFixed(1)}px`;
+                      if (
+                        blockStampText.getBoundingClientRect().height >
+                        textContainerHeight + 2
+                      ) {
+                        spacedTexts[1].style.fontSize = `${(
+                          spacedTextFontSize *
+                          (1 - blockTextScale)
+                        ).toFixed(1)}px`;
+                      }
+                    }
+                  }
+                }
+                // ===== the stamp update function
+                function updateName() {
+                  const nameInput = document.getElementById("nameInput");
+                  const newText = nameInput.value.toUpperCase();
+                  document
+                    .querySelectorAll('[id^="nameText"]')
+                    .forEach((nameText) => {
+                      nameText.textContent = newText;
+                    });
+                  // function to reduce font size whenever paragraph wraps
+                  regulateFontSizeLeft();
+                  regulateFontSizeRight();
+                }
+                // ==== adding the update function to the input
+                document
+                  .getElementById("nameInput")
+                  .addEventListener("input", updateName);
+                return blockStampText;
+              }
+            );
+        });
+      }
+    </script>
+  </body>
+</html>
