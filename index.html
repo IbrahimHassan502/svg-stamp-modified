@@ -83,7 +83,7 @@
                 ".curved-text-container"
               );
 
-              let i = 0;
+              let curvedTextOffset = 0;
 
               const curvedSvgBottom = document
                 .querySelector(".curved-svg")
@@ -103,7 +103,7 @@
                 curvedTextContiner,
                 curvedSvgBottom,
                 curvedText,
-                i,
+                curvedTextOffset,
                 blockStampText,
                 blockTextContainer,
               };
@@ -115,14 +115,14 @@
                 curvedTextContiner,
                 curvedSvgBottom,
                 curvedText,
-                i,
+                curvedTextOffset,
                 blockStampText,
                 blockTextContainer,
               }) => {
                 const curvedTextScale = 0.04;
                 const blockTextScale = 0.1;
-                // ====== left function
-                function regulateFontSizeLeft() {
+                // ===================================== left function =====================================
+                function regulateFontSizeLeft(overFlowCheck = false) {
                   const spacedTextFontSize = parseFloat(
                     window
                       .getComputedStyle(spacedTexts[0])
@@ -138,36 +138,37 @@
                       (1 - curvedTextScale)
                     ).toFixed(1)}px`;
 
-                    i -= 0.04;
-                    curvedTextContiner.style.transform = `translateY(${i}px)`;
+                    curvedTextContiner.style.transform = `translateY(${curvedTextOffset}px)`;
+                    curvedTextOffset -= 0.45;
 
-                    regulateFontSizeLeft();
+                    /*
+                     **if the function is called from the else if which increase the fontsize when characters **are deleted it skips calling the function again to prevent infinite loop
+                     */
+                    if (!overFlowCheck) {
+                      regulateFontSizeLeft();
+                    }
                   } else if (spacedTextFontSize < originalFontSize) {
                     spacedTexts[0].style.fontSize = `${(
                       spacedTextFontSize *
-                      (1 + curvedTextScale)
+                      (1 + curvedTextScale * 1.1)
                     ).toFixed(1)}px`;
 
-                    i += 0.02;
+                    curvedTextOffset += 0.5;
                     curvedTextContiner.style.transform = `translateY(${
-                      i > 0 ? i : 0
+                      curvedTextOffset < 0 ? curvedTextOffset : 0
                     }px)`;
 
-                    if (curvedTextBottom > curvedSvgBottom * 0.6) {
-                      spacedTexts[0].style.fontSize = `${(
-                        spacedTextFontSize *
-                        (1 - curvedTextScale)
-                      ).toFixed(1)}px`;
-
-                      i -= 0.04;
-                      curvedTextContiner.style.transform = `translateY(${i}px)`;
-                    }
+                    regulateFontSizeLeft(true);
                   }
                 }
 
-                // ===== right function
-                function regulateFontSizeRight() {
+                // ===================================== right function ====================================
+                function regulateFontSizeRight(overFlowCheck = false) {
+                  /*
+                    every function in the .then() is apllied one time for each stamp which is two times in total so one time the block stamp text will be undifined and the other it will be fetched so the statement to avoid error whenever the block stamp text is undifined
+                  */
                   if (blockStampText) {
+                    // ===================================== fetching variable values ======================
                     const spacedTextFontSize = parseFloat(
                       window
                         .getComputedStyle(blockStampText)
@@ -176,6 +177,8 @@
 
                     const textContainerHeight =
                       blockTextContainer.getBoundingClientRect().height;
+
+                    // ===================================== reducing fontsize =============================
                     if (
                       blockStampText.getBoundingClientRect().height >
                       textContainerHeight + 2
@@ -184,25 +187,28 @@
                         spacedTextFontSize *
                         (1 - blockTextScale)
                       ).toFixed(1)}px`;
-                      regulateFontSizeRight();
+
+                      /*
+                       ** if the function is called from the else if which increases the font when characters are ** deleted it skips calling the function again to prevent infinite loop
+                       */
+                      if (!overFlowCheck) {
+                        regulateFontSizeRight();
+                      }
                     } else if (spacedTextFontSize < originalFontSize) {
+                      /*
+                      state to increase the fontsize in case of deleting characters to maintain proper fontsize
+                      */
                       spacedTexts[1].style.fontSize = `${(
                         spacedTextFontSize *
                         (1 + blockTextScale / 2)
                       ).toFixed(1)}px`;
-                      if (
-                        blockStampText.getBoundingClientRect().height >
-                        textContainerHeight + 2
-                      ) {
-                        spacedTexts[1].style.fontSize = `${(
-                          spacedTextFontSize *
-                          (1 - blockTextScale)
-                        ).toFixed(1)}px`;
-                      }
+
+                      regulateFontSizeRight(true);
                     }
                   }
                 }
-                // ===== the stamp update function
+
+                // ===================================== the stamp update function ==========================
                 function updateName() {
                   const nameInput = document.getElementById("nameInput");
                   const newText = nameInput.value.toUpperCase();
@@ -211,11 +217,13 @@
                     .forEach((nameText) => {
                       nameText.textContent = newText;
                     });
-                  // function to reduce font size whenever paragraph wraps
+
+                  // ===================================== function to reduce font size whenever paragraph wraps
                   regulateFontSizeLeft();
                   regulateFontSizeRight();
                 }
-                // ==== adding the update function to the input
+
+                // ===================================== adding the update function to the input
                 document
                   .getElementById("nameInput")
                   .addEventListener("input", updateName);
@@ -224,6 +232,7 @@
             );
         });
       }
+      console.log("final");
     </script>
   </body>
 </html>
