@@ -137,23 +137,30 @@
                       spacedTextFontSize *
                       (1 - curvedTextScale)
                     ).toFixed(1)}px`;
-                    curvedTextContiner.style.transform = `translateY(${i}px)`;
+
                     i -= 0.04;
+                    curvedTextContiner.style.transform = `translateY(${i}px)`;
+
                     regulateFontSizeLeft();
                   } else if (spacedTextFontSize < originalFontSize) {
                     spacedTexts[0].style.fontSize = `${(
                       spacedTextFontSize *
                       (1 + curvedTextScale)
                     ).toFixed(1)}px`;
+
+                    i += 0.02;
+                    curvedTextContiner.style.transform = `translateY(${
+                      i > 0 ? i : 0
+                    }px)`;
+
                     if (curvedTextBottom > curvedSvgBottom * 0.6) {
                       spacedTexts[0].style.fontSize = `${(
                         spacedTextFontSize *
                         (1 - curvedTextScale)
                       ).toFixed(1)}px`;
-                      i += 0.02;
-                      curvedTextContiner.style.transform = `translateY(${
-                        i > 0 ? i : 0
-                      }px)`;
+
+                      i -= 0.04;
+                      curvedTextContiner.style.transform = `translateY(${i}px)`;
                     }
                   }
                 }
