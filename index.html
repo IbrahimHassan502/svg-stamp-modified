@@ -119,46 +119,56 @@
               }) => {
                 const curvedTextScale = 0.04;
                 const blockTextScale = 0.1;
-                const curvedSvgBottom =
-                  curvedSvg.getBoundingClientRect().bottom;
+                // =================== an initial solution to solve the "curvedSvg is not defined" error
+                if (curvedSvg) {
+                  const curvedSvgBottom =
+                    curvedSvg.getBoundingClientRect().bottom;
+                }
+
                 // ===================================== left function =====================================
                 function regulateFontSizeLeft(overFlowCheck = false) {
-                  const spacedTextFontSize = parseFloat(
-                    window
-                      .getComputedStyle(spacedTexts[0])
-                      .getPropertyValue("font-size")
-                  );
+                  /* 
+                  the if statement is an initial solution to solve the "curvedSvg is not defined" error
+                  */
 
-                  const curvedTextBottom =
-                    curvedText.getBoundingClientRect().bottom;
+                  if (curvedSvgBottom) {
+                    const spacedTextFontSize = parseFloat(
+                      window
+                        .getComputedStyle(spacedTexts[0])
+                        .getPropertyValue("font-size")
+                    );
 
-                  if (curvedTextBottom > curvedSvgBottom * 0.6) {
-                    spacedTexts[0].style.fontSize = `${(
-                      spacedTextFontSize *
-                      (1 - curvedTextScale)
-                    ).toFixed(1)}px`;
+                    const curvedTextBottom =
+                      curvedText.getBoundingClientRect().bottom;
 
-                    curvedTextContiner.style.transform = `translateY(${curvedTextOffset}px)`;
-                    curvedTextOffset -= 0.45;
+                    if (curvedTextBottom > curvedSvgBottom * 0.6) {
+                      spacedTexts[0].style.fontSize = `${(
+                        spacedTextFontSize *
+                        (1 - curvedTextScale)
+                      ).toFixed(1)}px`;
 
-                    /*
-                     **if the function is called from the else if which increase the fontsize when characters **are deleted it skips calling the function again to prevent infinite loop
-                     */
-                    if (!overFlowCheck) {
-                      regulateFontSizeLeft();
+                      curvedTextContiner.style.transform = `translateY(${curvedTextOffset}px)`;
+                      curvedTextOffset -= 0.45;
+
+                      /*
+                       **if the function is called from the else if which increase the fontsize when characters **are deleted it skips calling the function again to prevent infinite loop
+                       */
+                      if (!overFlowCheck) {
+                        regulateFontSizeLeft();
+                      }
+                    } else if (spacedTextFontSize < originalFontSize) {
+                      spacedTexts[0].style.fontSize = `${(
+                        spacedTextFontSize *
+                        (1 + curvedTextScale * 1.1)
+                      ).toFixed(1)}px`;
+
+                      curvedTextOffset += 0.5;
+                      curvedTextContiner.style.transform = `translateY(${
+                        curvedTextOffset < 0 ? curvedTextOffset : 0
+                      }px)`;
+
+                      regulateFontSizeLeft(true);
                     }
-                  } else if (spacedTextFontSize < originalFontSize) {
-                    spacedTexts[0].style.fontSize = `${(
-                      spacedTextFontSize *
-                      (1 + curvedTextScale * 1.1)
-                    ).toFixed(1)}px`;
-
-                    curvedTextOffset += 0.5;
-                    curvedTextContiner.style.transform = `translateY(${
-                      curvedTextOffset < 0 ? curvedTextOffset : 0
-                    }px)`;
-
-                    regulateFontSizeLeft(true);
                   }
                 }
 
