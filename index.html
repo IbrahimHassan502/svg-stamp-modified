@@ -85,9 +85,7 @@
 
               let curvedTextOffset = 0;
 
-              const curvedSvgBottom = stampContainer
-                .querySelector(".curved-svg")
-                .getBoundingClientRect().bottom;
+              const curvedSvg = stampContainer.querySelector(".curved-svg");
 
               const curvedText = stampContainer.querySelector(".curved-text");
 
@@ -101,7 +99,7 @@
                 spacedTexts,
                 originalFontSize,
                 curvedTextContiner,
-                curvedSvgBottom,
+                curvedSvg,
                 curvedText,
                 curvedTextOffset,
                 blockStampText,
@@ -113,7 +111,7 @@
                 spacedTexts,
                 originalFontSize,
                 curvedTextContiner,
-                curvedSvgBottom,
+                curvedSvg,
                 curvedText,
                 curvedTextOffset,
                 blockStampText,
@@ -121,6 +119,8 @@
               }) => {
                 const curvedTextScale = 0.04;
                 const blockTextScale = 0.1;
+                const curvedSvgBottom =
+                  curvedSvg.getBoundingClientRect().bottom;
                 // ===================================== left function =====================================
                 function regulateFontSizeLeft(overFlowCheck = false) {
                   const spacedTextFontSize = parseFloat(
@@ -227,7 +227,6 @@
                 document
                   .getElementById("nameInput")
                   .addEventListener("input", updateName);
-                return blockStampText;
               }
             );
         });
