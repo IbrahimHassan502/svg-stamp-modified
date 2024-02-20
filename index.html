@@ -120,55 +120,54 @@
                 const curvedTextScale = 0.04;
                 const blockTextScale = 0.1;
                 // =================== an initial solution to solve the "curvedSvg is not defined" error
+                let curvedSvgBottom = "";
                 if (curvedSvg) {
-                  const curvedSvgBottom =
-                    curvedSvg.getBoundingClientRect().bottom;
+                  curvedSvgBottom = curvedSvg.getBoundingClientRect().bottom;
                 }
 
                 // ===================================== left function =====================================
                 function regulateFontSizeLeft(overFlowCheck = false) {
+                  const spacedTextFontSize = parseFloat(
+                    window
+                      .getComputedStyle(spacedTexts[0])
+                      .getPropertyValue("font-size")
+                  );
+
+                  const curvedTextBottom =
+                    curvedText.getBoundingClientRect().bottom;
                   /* 
-                  the if statement is an initial solution to solve the "curvedSvg is not defined" error
+                  the check for curvedSvgBottom is an initial solution to solve the "curvedSvg is not defined" error
                   */
+                  if (
+                    curvedSvgBottom &&
+                    curvedTextBottom > curvedSvgBottom * 0.6
+                  ) {
+                    spacedTexts[0].style.fontSize = `${(
+                      spacedTextFontSize *
+                      (1 - curvedTextScale)
+                    ).toFixed(1)}px`;
 
-                  if (curvedSvgBottom) {
-                    const spacedTextFontSize = parseFloat(
-                      window
-                        .getComputedStyle(spacedTexts[0])
-                        .getPropertyValue("font-size")
-                    );
+                    curvedTextContiner.style.transform = `translateY(${curvedTextOffset}px)`;
+                    curvedTextOffset -= 0.45;
 
-                    const curvedTextBottom =
-                      curvedText.getBoundingClientRect().bottom;
-
-                    if (curvedTextBottom > curvedSvgBottom * 0.6) {
-                      spacedTexts[0].style.fontSize = `${(
-                        spacedTextFontSize *
-                        (1 - curvedTextScale)
-                      ).toFixed(1)}px`;
-
-                      curvedTextContiner.style.transform = `translateY(${curvedTextOffset}px)`;
-                      curvedTextOffset -= 0.45;
-
-                      /*
-                       **if the function is called from the else if which increase the fontsize when characters **are deleted it skips calling the function again to prevent infinite loop
-                       */
-                      if (!overFlowCheck) {
-                        regulateFontSizeLeft();
-                      }
-                    } else if (spacedTextFontSize < originalFontSize) {
-                      spacedTexts[0].style.fontSize = `${(
-                        spacedTextFontSize *
-                        (1 + curvedTextScale * 1.1)
-                      ).toFixed(1)}px`;
-
-                      curvedTextOffset += 0.5;
-                      curvedTextContiner.style.transform = `translateY(${
-                        curvedTextOffset < 0 ? curvedTextOffset : 0
-                      }px)`;
-
-                      regulateFontSizeLeft(true);
+                    /*
+                     **if the function is called from the else if which increase the fontsize when characters **are deleted it skips calling the function again to prevent infinite loop
+                     */
+                    if (!overFlowCheck) {
+                      regulateFontSizeLeft();
                     }
+                  } else if (spacedTextFontSize < originalFontSize) {
+                    spacedTexts[0].style.fontSize = `${(
+                      spacedTextFontSize *
+                      (1 + curvedTextScale * 1.1)
+                    ).toFixed(1)}px`;
+
+                    curvedTextOffset += 0.5;
+                    curvedTextContiner.style.transform = `translateY(${
+                      curvedTextOffset < 0 ? curvedTextOffset : 0
+                    }px)`;
+
+                    regulateFontSizeLeft(true);
                   }
                 }
 
