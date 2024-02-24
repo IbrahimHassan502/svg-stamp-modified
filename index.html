@@ -86,16 +86,25 @@
 
               let curvedTextOffset = 0;
 
+              let isCurvedTextBottom = false;
+
               const curvedSvg = stampContainer.querySelector(".curved-svg");
 
               const curvedText = stampContainer.querySelector(".curved-text");
 
-              //   variables for the right stamp function
-              const blockStampText =
-                stampContainer.querySelector(".block-stamp-text");
+              if (curvedSvg) {
+                const curvedSvgDim = curvedSvg.getBoundingClientRect();
+                const curvedTextDim = curvedText.getBoundingClientRect();
 
-              const blockTextContainer =
-                stampContainer.querySelector("#textContainer");
+                // if statement to detect if the text on the bottom or the top of the stamp
+                if (
+                  curvedTextDim.y - curvedSvgDim.y >
+                  curvedTextDim.bottom - curvedSvgDim.bottom
+                ) {
+                  isCurvedTextBottom = true;
+                }
+              }
+
               return {
                 spacedTexts,
                 originalFontSize,
@@ -103,8 +112,7 @@
                 curvedSvg,
                 curvedText,
                 curvedTextOffset,
-                blockStampText,
-                blockTextContainer,
+                isCurvedTextBottom,
               };
             })
             .then(
@@ -115,17 +123,9 @@
                 curvedSvg,
                 curvedText,
                 curvedTextOffset,
-                blockStampText,
-                blockTextContainer,
+                isCurvedTextBottom,
               }) => {
                 const curvedTextScale = 0.04;
-                const blockTextScale = 0.1;
-                // =================== an initial solution to solve the "curvedSvg is not defined" error
-                let curvedSvgBottom = "";
-                if (curvedSvg) {
-                  curvedSvgBottom = curvedSvg.getBoundingClientRect().bottom;
-                }
-
                 // ===================================== left function =====================================
                 function regulateFontSizeLeft(overFlowCheck = false) {
                   const spacedTextFontSize = parseFloat(
@@ -134,103 +134,87 @@
                       .getPropertyValue("font-size")
                   );
 
-                  const curvedTextBottom =
-                    curvedText.getBoundingClientRect().bottom;
-                  /* 
-                  the check for curvedSvgBottom is an initial solution to solve the "curvedSvg is not defined" error
-                  */
-                  if (
-                    curvedSvgBottom &&
-                    curvedTextBottom > curvedSvgBottom * 0.6
-                  ) {
-                    spacedTexts[0].style.fontSize = `${(
-                      spacedTextFontSize *
-                      (1 - curvedTextScale)
-                    ).toFixed(1)}px`;
+                  if (curvedSvg && isCurvedTextBottom) {
+                    const curvedTextDim = curvedText.getBoundingClientRect();
+                    const curvedSvgDim = curvedSvg.getBoundingClientRect();
 
-                    curvedTextContiner.style.transform = `translateY(${curvedTextOffset}px)`;
-                    curvedTextOffset -= 0.45;
+                    // console.log("for the text ==================");
+                    // console.log(curvedTextDim);
+                    // console.log("for the svg ==================");
+                    // console.log(curvedSvgDim);
 
-                    /*
-                     **if the function is called from the else if which increase the fontsize when characters **are deleted it skips calling the function again to prevent infinite loop
-                     */
-                    if (!overFlowCheck) {
-                      regulateFontSizeLeft();
-                    }
-                  } else if (spacedTextFontSize < originalFontSize) {
-                    spacedTexts[0].style.fontSize = `${(
-                      spacedTextFontSize *
-                      (1 + curvedTextScale * 1.1)
-                    ).toFixed(1)}px`;
-
-                    curvedTextOffset += 0.5;
-                    curvedTextContiner.style.transform = `translateY(${
-                      curvedTextOffset < 0 ? curvedTextOffset : 0
-                    }px)`;
-
-                    regulateFontSizeLeft(true);
-                  }
-                }
-
-                // ===================================== right function ====================================
-                function regulateFontSizeRight(overFlowCheck = false) {
-                  /*
-                    every function in the .then() is apllied one time for each stamp which is two times in total so one time the block stamp text will be undifined and the other it will be fetched so the statement to avoid error whenever the block stamp text is undifined
-                  */
-                  if (blockStampText) {
-                    // ===================================== fetching variable values ======================
-                    const spacedTextFontSize = parseFloat(
-                      window
-                        .getComputedStyle(blockStampText)
-                        .getPropertyValue("font-size")
-                    );
-
-                    const textContainerHeight =
-                      blockTextContainer.getBoundingClientRect().height;
-
-                    // ===================================== reducing fontsize =============================
                     if (
-                      blockStampText.getBoundingClientRect().height >
-                      textContainerHeight + 2
+                      curvedTextDim.bottom + curvedTextDim.height >
+                      curvedSvgDim.bottom + 0.31 * curvedSvgDim.height
                     ) {
-                      spacedTexts[1].style.fontSize = `${(
+                      console.log("bottom functino activeate");
+
+                      spacedTexts[0].style.fontSize = `${(
                         spacedTextFontSize *
-                        (1 - blockTextScale)
+                        (1 - curvedTextScale)
                       ).toFixed(1)}px`;
 
-                      /*
-                       ** if the function is called from the else if which increases the font when characters are ** deleted it skips calling the function again to prevent infinite loop
-                       */
                       if (!overFlowCheck) {
-                        regulateFontSizeRight();
+                        regulateFontSizeLeft();
                       }
                     } else if (spacedTextFontSize < originalFontSize) {
-                      /*
-                      state to increase the fontsize in case of deleting characters to maintain proper fontsize
-                      */
-                      spacedTexts[1].style.fontSize = `${(
+                      spacedTexts[0].style.fontSize = `${(
                         spacedTextFontSize *
-                        (1 + blockTextScale / 2)
+                        (1 + curvedTextScale * 1.1)
                       ).toFixed(1)}px`;
-
-                      regulateFontSizeRight(true);
+                      regulateFontSizeLeft(true);
                     }
                   }
-                }
 
+                  const curvedTextBottom =
+                    curvedText.getBoundingClientRect().bottom;
+                  /*
+                  the check for curvedSvgBottom is an initial solution to solve the "curvedSvg is not defined" error
+                  */
+                  // if (
+                  //   curvedSvgBottom &&
+                  //   curvedTextBottom > curvedSvgBottom * 0.6
+                  // ) {
+                  //   spacedTexts[0].style.fontSize = `${(
+                  //     spacedTextFontSize *
+                  //     (1 - curvedTextScale)
+                  //   ).toFixed(1)}px`;
+
+                  //   curvedTextContiner.style.transform = `translateY(${curvedTextOffset}px)`;
+                  //   curvedTextOffset -= 0.45;
+
+                  //   /*
+                  //    **if the function is called from the else if which increase the fontsize when characters **are deleted it skips calling the function again to prevent infinite loop
+                  //    */
+                  //   if (!overFlowCheck) {
+                  //     regulateFontSizeLeft();
+                  //   }
+                  // } else if (spacedTextFontSize < originalFontSize) {
+                  //   spacedTexts[0].style.fontSize = `${(
+                  //     spacedTextFontSize *
+                  //     (1 + curvedTextScale * 1.1)
+                  //   ).toFixed(1)}px`;
+
+                  //   curvedTextOffset += 0.5;
+                  //   curvedTextContiner.style.transform = `translateY(${
+                  //     curvedTextOffset < 0 ? curvedTextOffset : 0
+                  //   }px)`;
+
+                  //   regulateFontSizeLeft(true);
+                  // }
+                }
                 // ===================================== the stamp update function ==========================
                 function updateName() {
                   const nameInput = document.getElementById("nameInput");
                   const newText = nameInput.value.toUpperCase();
                   document
-                    .querySelectorAll('[id^="nameText"]')
+                    .querySelectorAll('textPath[id^="nameText"]')
                     .forEach((nameText) => {
                       nameText.textContent = newText;
                     });
 
                   // ===================================== function to reduce font size whenever paragraph wraps
                   regulateFontSizeLeft();
-                  regulateFontSizeRight();
                 }
 
                 // ===================================== adding the update function to the input
