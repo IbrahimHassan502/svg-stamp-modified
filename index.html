@@ -98,8 +98,8 @@
 
                 // if statement to detect if the text on the bottom or the top of the stamp
                 if (
-                  curvedTextDim.y - curvedSvgDim.y >
-                  curvedTextDim.bottom - curvedSvgDim.bottom
+                  Math.abs(curvedTextDim.y - curvedSvgDim.y) >
+                  Math.abs(curvedTextDim.bottom - curvedSvgDim.bottom)
                 ) {
                   isCurvedTextBottom = true;
                 }
@@ -125,6 +125,8 @@
                 curvedTextOffset,
                 isCurvedTextBottom,
               }) => {
+                console.log(isCurvedTextBottom);
+
                 const curvedTextScale = 0.04;
                 // ===================================== left function =====================================
                 function regulateFontSizeLeft(overFlowCheck = false) {
@@ -139,9 +141,9 @@
                     const curvedSvgDim = curvedSvg.getBoundingClientRect();
 
                     // console.log("for the text ==================");
-                    // console.log(curvedTextDim);
+                    // console.log(curvedTextDim.y - curvedSvgDim.y);
                     // console.log("for the svg ==================");
-                    // console.log(curvedSvgDim);
+                    // console.log(curvedTextDim.bottom - );
 
                     if (
                       curvedTextDim.bottom + curvedTextDim.height >
@@ -149,6 +151,31 @@
                     ) {
                       console.log("bottom functino activeate");
 
+                      spacedTexts[0].style.fontSize = `${(
+                        spacedTextFontSize *
+                        (1 - curvedTextScale)
+                      ).toFixed(1)}px`;
+
+                      if (!overFlowCheck) {
+                        regulateFontSizeLeft();
+                      }
+                    } else if (spacedTextFontSize < originalFontSize) {
+                      spacedTexts[0].style.fontSize = `${(
+                        spacedTextFontSize *
+                        (1 + curvedTextScale * 1.1)
+                      ).toFixed(1)}px`;
+                      regulateFontSizeLeft(true);
+                    }
+                  } else if (curvedSvg && !isCurvedTextBottom) {
+                    console.log("top function activated");
+
+                    const curvedTextDim = curvedText.getBoundingClientRect();
+                    const curvedSvgDim = curvedSvg.getBoundingClientRect();
+
+                    if (
+                      curvedTextDim.y + curvedTextDim.height >
+                      curvedSvgDim.y + 0.45 * curvedSvgDim.height
+                    ) {
                       spacedTexts[0].style.fontSize = `${(
                         spacedTextFontSize *
                         (1 - curvedTextScale)
