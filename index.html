@@ -52,163 +52,129 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         loadSVGs(["img/curved_stamp.svg"]);
-        // loadSVGs(["img/curved_stamp.svg", "img/block_stamp.svg"]);
       });
 
-      function loadSVGs(svgPaths) {
-        svgPaths.forEach((svgPath) => {
-          fetch(svgPath)
-            .then((response) => response.text())
-            .then((svgData) => {
-              const stampContainer = document.getElementById("stampContainer");
-              const div = document.createElement("div");
-              div.innerHTML = svgData;
-              div.classList.add("inline-block");
-              stampContainer.appendChild(div);
-              return stampContainer;
-            })
-            .then((stampContainer) => {
-              // ======= fontsize regulation variables
-              //  variables for both functions
-              const spacedTexts =
-                stampContainer.querySelectorAll(".spaced-text");
+      function loadSVGs(svgPath) {
+        fetch(svgPath)
+          .then((response) => response.text())
+          .then((svgData) => {
+            const stampContainer = document.getElementById("stampContainer");
+            const div = document.createElement("div");
+            div.innerHTML = svgData;
+            div.classList.add("inline-block");
+            stampContainer.appendChild(div);
+            return stampContainer;
+          })
+          .then((stampContainer) => {
+            const curvedText = stampContainer.querySelector("#nameText");
 
-              const originalFontSize = parseFloat(
+            return curvedText;
+          })
+          .then((curvedText) => {
+            // variables
+            let curvedTextOffset = 0;
+
+            const originalFontSize = parseFloat(
+              window.getComputedStyle(curvedText).getPropertyValue("font-size")
+            );
+
+            const curvedSvg = curvedText.closest("svg");
+            const curvedSvgDim = curvedSvg.getBoundingClientRect();
+
+            const curvedTextScale = 0.04;
+            // =========================== the font size regulation function =====================================
+            function regulateFontSize(overFlowCheck = false) {
+              const curvedTextFontSize = parseFloat(
                 window
-                  .getComputedStyle(spacedTexts[0])
+                  .getComputedStyle(curvedText)
                   .getPropertyValue("font-size")
               );
 
-              // variables for the left stamp function
-              const curvedTextContiner = stampContainer.querySelector(
-                ".curved-text-container"
-              );
+              const curvedTextDim = curvedText.getBoundingClientRect();
 
-              let curvedTextOffset = 0;
+              const curvedTextContainer = curvedText.closest("text");
+              console.log(curvedTextContainer);
 
               let isCurvedTextBottom = false;
+              let bottomTextReduce = false;
+              let topTextReduce = false;
 
-              const curvedSvg = stampContainer.querySelector(".curved-svg");
-
-              const curvedText = stampContainer.querySelector(".curved-text");
-
-              if (curvedSvg) {
-                const curvedSvgDim = curvedSvg.getBoundingClientRect();
-                const curvedTextDim = curvedText.getBoundingClientRect();
-
-                // if statement to detect if the text on the bottom or the top of the stamp
-                if (
-                  Math.abs(curvedTextDim.y - curvedSvgDim.y) >
-                  Math.abs(curvedTextDim.bottom - curvedSvgDim.bottom)
-                ) {
-                  isCurvedTextBottom = true;
-                }
+              // if statement to detect if the text on the bottom or the top of the stamp
+              if (
+                Math.abs(curvedTextDim.y - curvedSvgDim.y) >
+                Math.abs(curvedTextDim.bottom - curvedSvgDim.bottom)
+              ) {
+                isCurvedTextBottom = true;
+              }
+              // if statement to detect if the bottom text exceeds it boundries
+              if (
+                curvedTextDim.bottom + curvedTextDim.height >
+                curvedSvgDim.bottom + 0.31 * curvedSvgDim.height
+              ) {
+                bottomTextReduce = true;
+              }
+              // if statement to detect if the top text exceeds it boundries
+              if (
+                curvedTextDim.y + curvedTextDim.height >
+                curvedSvgDim.y + 0.45 * curvedSvgDim.height
+              ) {
+                topTextReduce = true;
               }
 
-              return {
-                spacedTexts,
-                originalFontSize,
-                curvedTextContiner,
-                curvedSvg,
-                curvedText,
-                curvedTextOffset,
-                isCurvedTextBottom,
-              };
-            })
-            .then(
-              ({
-                spacedTexts,
-                originalFontSize,
-                curvedTextContiner,
-                curvedSvg,
-                curvedText,
-                curvedTextOffset,
-                isCurvedTextBottom,
-              }) => {
-                console.log(isCurvedTextBottom);
+              if (
+                (isCurvedTextBottom && bottomTextReduce) ||
+                (!isCurvedTextBottom && topTextReduce)
+              ) {
+                curvedText.style.fontSize = `${(
+                  curvedTextFontSize *
+                  (1 - curvedTextScale)
+                ).toFixed(1)}px`;
 
-                const curvedTextScale = 0.04;
-                // ===================================== left function =====================================
-                function regulateFontSizeLeft(overFlowCheck = false) {
-                  const spacedTextFontSize = parseFloat(
-                    window
-                      .getComputedStyle(spacedTexts[0])
-                      .getPropertyValue("font-size")
-                  );
-
-                  if (curvedSvg && isCurvedTextBottom) {
-                    const curvedTextDim = curvedText.getBoundingClientRect();
-                    const curvedSvgDim = curvedSvg.getBoundingClientRect();
-
-                    if (
-                      curvedTextDim.bottom + curvedTextDim.height >
-                      curvedSvgDim.bottom + 0.31 * curvedSvgDim.height
-                    ) {
-                      console.log("bottom functino activeate");
-
-                      spacedTexts[0].style.fontSize = `${(
-                        spacedTextFontSize *
-                        (1 - curvedTextScale)
-                      ).toFixed(1)}px`;
-
-                      if (!overFlowCheck) {
-                        regulateFontSizeLeft();
-                      }
-                    } else if (spacedTextFontSize < originalFontSize) {
-                      spacedTexts[0].style.fontSize = `${(
-                        spacedTextFontSize *
-                        (1 + curvedTextScale * 1.1)
-                      ).toFixed(1)}px`;
-                      regulateFontSizeLeft(true);
-                    }
-                  } else if (curvedSvg && !isCurvedTextBottom) {
-                    console.log("top function activated");
-
-                    const curvedTextDim = curvedText.getBoundingClientRect();
-                    const curvedSvgDim = curvedSvg.getBoundingClientRect();
-
-                    if (
-                      curvedTextDim.y + curvedTextDim.height >
-                      curvedSvgDim.y + 0.45 * curvedSvgDim.height
-                    ) {
-                      spacedTexts[0].style.fontSize = `${(
-                        spacedTextFontSize *
-                        (1 - curvedTextScale)
-                      ).toFixed(1)}px`;
-
-                      if (!overFlowCheck) {
-                        regulateFontSizeLeft();
-                      }
-                    } else if (spacedTextFontSize < originalFontSize) {
-                      spacedTexts[0].style.fontSize = `${(
-                        spacedTextFontSize *
-                        (1 + curvedTextScale * 1.1)
-                      ).toFixed(1)}px`;
-                      regulateFontSizeLeft(true);
-                    }
-                  }
-                }
-                // ===================================== the stamp update function ==========================
-                function updateName() {
-                  const nameInput = document.getElementById("nameInput");
-                  const newText = nameInput.value.toUpperCase();
-                  document
-                    .querySelectorAll('textPath[id^="nameText"]')
-                    .forEach((nameText) => {
-                      nameText.textContent = newText;
-                    });
-
-                  // ===================================== function to reduce font size whenever paragraph wraps
-                  regulateFontSizeLeft();
+                // pulling the top curved text up to maintain visuals
+                if (!isCurvedTextBottom) {
+                  curvedTextOffset -= curvedTextScale;
+                  curvedTextContainer.style.transform = `translateY(${curvedTextOffset}px)`;
                 }
 
-                // ===================================== adding the update function to the input
-                document
-                  .getElementById("nameInput")
-                  .addEventListener("input", updateName);
+                if (!overFlowCheck) {
+                  regulateFontSize();
+                } // else if statement to increase fontsize in case of deleting characters
+              } else if (curvedTextFontSize < originalFontSize) {
+                curvedText.style.fontSize = `${(
+                  curvedTextFontSize *
+                  (1 + curvedTextScale * 1.1)
+                ).toFixed(1)}px`;
+
+                // pushing the top curved text back down to maintain visuals
+                if (!isCurvedTextBottom) {
+                  curvedTextOffset += curvedTextScale;
+                  curvedTextContainer.style.transform = `translateY(${
+                    curvedTextOffset < 0 ? curvedTextOffset : 0
+                  }px)`;
+                }
+
+                regulateFontSize(true);
               }
-            );
-        });
+            }
+            // ===================================== the stamp update function ==========================
+            function updateName() {
+              const nameInput = document.getElementById("nameInput");
+              const newText = nameInput.value.toUpperCase();
+              document
+                .querySelectorAll('textPath[id^="nameText"]')
+                .forEach((nameText) => {
+                  nameText.textContent = newText;
+                });
+
+              // ===================================== function to reduce font size whenever paragraph wraps
+              regulateFontSize();
+            }
+
+            // ===================================== adding the update function to the input
+            document
+              .getElementById("nameInput")
+              .addEventListener("input", updateName);
+          });
       }
     </script>
   </body>
