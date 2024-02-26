@@ -14,29 +14,52 @@
         <div
           class="relative px-4 py-16 mx-auto overflow-hidden sm:max-w-xl md:max-w-full lg:max-w-screen-xl md:px-24 lg:px-8 lg:py-20"
         >
-          <div class="flex flex-col items-center justify-between xl:flex-row">
-            <div class="w-full max-w-xl mb-12 xl:mb-0 xl:pr-16 xl:w-7/12">
-              <div class="mb-12 flex justify-center" id="stampContainer">
-                <!-- SVGs will be loaded here -->
-              </div>
-              <div class="mx-auto">
-                <div
-                  class="p-4 bg-white shadow-md rounded border border-gray-500"
-                >
-                  <form class="w-full max-w-xl mx-auto">
-                    <div class="mb-4">
-                      <label for="nameInput" class="block text-gray-700"
-                        >Enter your name:</label
-                      >
-                      <div class="flex items-center">
-                        <input
-                          type="text"
-                          id="nameInput"
-                          class="w-full px-3 py-2 border border-gray-300 rounded"
-                        />
+          <div class="flex justify-center gap-16">
+            <div class="stamp-picker">
+              <img
+                class="stamp cursor-pointer"
+                src="img/block_stamp.svg"
+                width="70"
+                alt=""
+              />
+              <img
+                class="stamp cursor-pointer"
+                src="img/curved_stamp.svg"
+                width="70"
+                alt=""
+              />
+              <img
+                class="stamp cursor-pointer"
+                src="img/curved_stamp2.svg"
+                width="70"
+                alt=""
+              />
+            </div>
+
+            <div class="flex flex-col items-center justify-between xl:flex-row">
+              <div class="w-full max-w-xl mb-12 xl:mb-0 xl:pr-16 xl:w-7/12">
+                <div class="mb-12 flex justify-center" id="stampContainer">
+                  <!-- SVGs will be loaded here -->
+                </div>
+                <div class="mx-auto">
+                  <div
+                    class="p-4 bg-white shadow-md rounded border border-gray-500"
+                  >
+                    <form class="w-full max-w-xl mx-auto">
+                      <div class="mb-4">
+                        <label for="nameInput" class="block text-gray-700"
+                          >Enter your name:</label
+                        >
+                        <div class="flex items-center">
+                          <input
+                            type="text"
+                            id="nameInput"
+                            class="w-full px-3 py-2 border border-gray-300 rounded"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </form>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>
@@ -51,7 +74,7 @@
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        loadSVGs(["img/curved_stamp.svg"]);
+        loadSVGs(["img/block_stamp.svg"]);
       });
 
       function loadSVGs(svgPath) {
@@ -62,118 +85,176 @@
             const div = document.createElement("div");
             div.innerHTML = svgData;
             div.classList.add("inline-block");
+            stampContainer.innerHTML = "";
             stampContainer.appendChild(div);
             return stampContainer;
           })
           .then((stampContainer) => {
-            const curvedText = stampContainer.querySelector("#nameText");
+            const textPath = stampContainer.querySelector(".textPath");
 
-            return curvedText;
+            return textPath;
           })
-          .then((curvedText) => {
-            // variables
-            let curvedTextOffset = 0;
-
+          .then((textPath) => {
             const originalFontSize = parseFloat(
-              window.getComputedStyle(curvedText).getPropertyValue("font-size")
+              window.getComputedStyle(textPath).getPropertyValue("font-size")
             );
 
-            const curvedSvg = curvedText.closest("svg");
-            const curvedSvgDim = curvedSvg.getBoundingClientRect();
+            const parentSvgDim = textPath
+              .closest("svg")
+              .getBoundingClientRect();
 
+            const textPathContainer = textPath.parentElement;
+
+            // variables for curved text
             const curvedTextScale = 0.04;
-            // =========================== the font size regulation function =====================================
-            function regulateFontSize(overFlowCheck = false) {
+
+            // a variable used to pull the top curved text up when font size reduce (or push it down when fontsize increased) to maintain visuals
+            let curvedTextOffset = 0;
+
+            // detecting if the curved text is at top or bottom
+            const curvedTextDim = textPath.getBoundingClientRect();
+
+            const isCurvedTextBottom =
+              Math.abs(curvedTextDim.y - parentSvgDim.y) >
+              Math.abs(curvedTextDim.bottom - parentSvgDim.bottom)
+                ? true
+                : false;
+
+            // ================== curved text fontsize regulation function ==================
+            function regulateCurvedFontSize(overFlowCheck = false) {
               const curvedTextFontSize = parseFloat(
-                window
-                  .getComputedStyle(curvedText)
-                  .getPropertyValue("font-size")
+                window.getComputedStyle(textPath).getPropertyValue("font-size")
               );
 
-              const curvedTextDim = curvedText.getBoundingClientRect();
+              const curvedTextDim = textPath.getBoundingClientRect();
 
-              const curvedTextContainer = curvedText.closest("text");
-              console.log(curvedTextContainer);
-
-              let isCurvedTextBottom = false;
-              let bottomTextReduce = false;
-              let topTextReduce = false;
-
-              // if statement to detect if the text on the bottom or the top of the stamp
-              if (
-                Math.abs(curvedTextDim.y - curvedSvgDim.y) >
-                Math.abs(curvedTextDim.bottom - curvedSvgDim.bottom)
-              ) {
-                isCurvedTextBottom = true;
-              }
-              // if statement to detect if the bottom text exceeds it boundries
-              if (
+              // detecting if the bottom text exceeded it's boundaries
+              const bottomTextReduce =
                 curvedTextDim.bottom + curvedTextDim.height >
-                curvedSvgDim.bottom + 0.31 * curvedSvgDim.height
-              ) {
-                bottomTextReduce = true;
-              }
-              // if statement to detect if the top text exceeds it boundries
-              if (
+                parentSvgDim.bottom + 0.31 * parentSvgDim.height
+                  ? true
+                  : false;
+              // detecting if the top text exceeded it's boundaries
+              const topTextReduce =
                 curvedTextDim.y + curvedTextDim.height >
-                curvedSvgDim.y + 0.45 * curvedSvgDim.height
-              ) {
-                topTextReduce = true;
-              }
+                parentSvgDim.y + 0.45 * parentSvgDim.height
+                  ? true
+                  : false;
 
+              // if statement to reduce font size whenever it exceeds its boundaries
               if (
                 (isCurvedTextBottom && bottomTextReduce) ||
                 (!isCurvedTextBottom && topTextReduce)
               ) {
-                curvedText.style.fontSize = `${(
+                textPath.style.fontSize = `${(
                   curvedTextFontSize *
                   (1 - curvedTextScale)
                 ).toFixed(1)}px`;
 
                 // pulling the top curved text up to maintain visuals
                 if (!isCurvedTextBottom) {
-                  curvedTextOffset -= curvedTextScale;
-                  curvedTextContainer.style.transform = `translateY(${curvedTextOffset}px)`;
+                  curvedTextOffset -= curvedTextScale * 1.2;
+                  textPathContainer.style.transform = `translateY(${curvedTextOffset}px)`;
                 }
 
+                // in case the function call is coming from the else if it skips calling the function again to avoid infinite loop
                 if (!overFlowCheck) {
-                  regulateFontSize();
-                } // else if statement to increase fontsize in case of deleting characters
+                  regulateCurvedFontSize();
+                }
+
+                /*
+                 *** else if statement to increase fontsize in case of deleting characters
+                 *** the else if increases the font size then calls the function again (one time) to check if the *** increase was too much then decrease it a little
+                 */
               } else if (curvedTextFontSize < originalFontSize) {
-                curvedText.style.fontSize = `${(
+                textPath.style.fontSize = `${(
                   curvedTextFontSize *
-                  (1 + curvedTextScale * 1.1)
+                  (1 + curvedTextScale)
                 ).toFixed(1)}px`;
 
                 // pushing the top curved text back down to maintain visuals
                 if (!isCurvedTextBottom) {
-                  curvedTextOffset += curvedTextScale;
-                  curvedTextContainer.style.transform = `translateY(${
+                  curvedTextOffset += curvedTextScale * 1.1;
+                  textPathContainer.style.transform = `translateY(${
                     curvedTextOffset < 0 ? curvedTextOffset : 0
                   }px)`;
                 }
 
-                regulateFontSize(true);
+                // recalling the function (one more time) just to check if the fontsize too large decrease it by a little
+                regulateCurvedFontSize((overFlowCheck = true));
+              }
+            }
+
+            // variables for regualr text fontsize rgularion function
+            const blockTextScale = 0.1;
+
+            // ================== regular text fontsize regulation function ==================
+            function regulateBlockFontSize(overFlowCheck) {
+              const blockTextFontSize = parseFloat(
+                window.getComputedStyle(textPath).getPropertyValue("font-size")
+              );
+
+              const blockTextDim = textPath.getBoundingClientRect();
+
+              if (
+                blockTextDim.height >
+                textPathContainer.getBoundingClientRect().height + 3
+              ) {
+                textPath.style.fontSize = `${(
+                  blockTextFontSize *
+                  (1 - blockTextScale)
+                ).toFixed(1)}px`;
+
+                // in case the function call is coming from the else if it skips calling the function again to avoid infinite loop
+                if (!overFlowCheck) {
+                  regulateBlockFontSize();
+                }
+
+                /*
+                 *** else if statement to increase fontsize in case of deleting characters
+                 *** the else if increases the font size then calls the function again (one time) to check if the *** increase was too much then decrease it a little
+                 */
+              } else if (blockTextFontSize < originalFontSize) {
+                textPath.style.fontSize = `${(
+                  blockTextFontSize *
+                  (1 + blockTextScale)
+                ).toFixed(1)}px`;
+
+                // recalling the function (one more time) just to check if the fontsize too large decrease it by a little
+                regulateBlockFontSize((overFlowCheck = true));
               }
             }
             // ===================================== the stamp update function ==========================
+            let isTextCurved = textPath
+              .closest("svg")
+              .classList.contains("curved-svg")
+              ? true
+              : false;
+
             function updateName() {
               const nameInput = document.getElementById("nameInput");
               const newText = nameInput.value.toUpperCase();
               document
-                .querySelectorAll('textPath[id^="nameText"]')
+                .querySelectorAll('[id^="nameText"]')
                 .forEach((nameText) => {
                   nameText.textContent = newText;
                 });
 
-              // ===================================== function to reduce font size whenever paragraph wraps
-              regulateFontSize();
+              // =========== function to reduce font size whenever paragraph wraps in case of curved or regular text
+              isTextCurved ? regulateCurvedFontSize() : regulateBlockFontSize();
             }
-
-            // ===================================== adding the update function to the input
+            // ======================= adding the update function to the input =======================
             document
               .getElementById("nameInput")
               .addEventListener("input", updateName);
+
+            document
+              .querySelector(".stamp-picker")
+              .addEventListener("click", (e) => {
+                if (e.target.classList.contains("stamp")) {
+                  loadSVGs(e.target.src);
+                }
+              });
           });
       }
     </script>
